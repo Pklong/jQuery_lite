@@ -148,10 +148,36 @@
     };
 
 
+
+
     var collection = new DOMNodeCollection(nodeListArr);
     return collection;
   };
 
+  root.$l.extend = function (obj1, obj2) {
+    var args = [].slice.call(arguments, 1);
+    args.forEach( function (el) {
+      for (var key in el) {
+        obj1[key] = el[key];
+      }
+    });
+    return obj1;
+  };
+
+  root.$l.myAjax = function (options) {
+    var requestParams = {
+      type: 'GET',
+      url: window.location.href,
+      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+      success: function () { console.log("Request Complete"); },
+      error: function () { console.log("Error"); }
+    };
+    requestParams = this.extend(requestParams, options);
+
+    var request = new XMLHttpRequest();
+    request.open(requestParams.type, requestParams.url);
+    request.send();
+  };
 
 
 })(this);
