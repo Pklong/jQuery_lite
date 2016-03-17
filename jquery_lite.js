@@ -2,7 +2,23 @@
 
   root.$l = function (selector) {
 
+    this.queue = [];
     var nodeListArr = [];
+
+    if (typeof selector === "function") {
+      if (document.readyState === "interactive") {
+        selector();
+      } else {
+        this.queue.push(selector);
+      }
+
+    }
+
+    if (document.readyState === "interactive") {
+      this.queue.forEach (function(cb) {
+        cb();
+      });
+    }
 
     if (selector instanceof HTMLElement) {
       nodeListArr.push(selector);
@@ -114,13 +130,27 @@
       for (var i = 0; i < length; i++) {
         this.els.pop().remove();
       }
+      return null;
+    };
+
+    DOMNodeCollection.prototype.on = function (listenedEvent, callback) {
+      this.els.forEach( function (el) {
+        el.addEventListener(listenedEvent, callback);
+      });
       return this.els;
     };
+
+    DOMNodeCollection.prototype.off = function (listenedEvent, callback) {
+      this.els.forEach( function (el) {
+        el.removeEventListener(listenedEvent, callback);
+      });
+      return this.els;
+    };
+
 
     var collection = new DOMNodeCollection(nodeListArr);
     return collection;
   };
-
 
 
 
