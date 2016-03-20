@@ -45,121 +45,113 @@
   DOMNodeCollection.prototype = {
 
     html: function(html) {
-    if (typeof html === 'string') {
-      //setter
-      this.nodes.forEach(function (el) {
-        el.innerHTML = html;
-      });
-    } else {
-      //getter
-      if (this.nodes.length > 0) {
-        return this.nodes[0].innerHTML;
+      if (typeof html === 'string') {
+        //setter
+        this.nodes.forEach(function (el) {
+          el.innerHTML = html;
+        });
       } else {
-        console.error("No nodes present!");
+        //getter
+        if (this.nodes.length > 0) {
+          return this.nodes[0].innerHTML;
+        } else {
+          console.error("No nodes present!");
+        }
       }
-    }
-  },
+    },
 
-  each: function(cb) {
-    this.nodes.forEach(cb);
-  },
+    each: function(cb) {
+      this.nodes.forEach(cb);
+    },
 
-  empty: function () {
-    this.html("");
-  },
+    empty: function () {
+      this.html("");
+    },
 
-  append: function (children) {
-    if (this.nodes.length > 0) { return; }
+    append: function (children) {
+      if (this.nodes.length > 0) { return; }
 
-    if (typeof children === 'object' &&
-        !(children instanceof DOMNodeCollection)) {
-      children = root.$l(children);
-    }
+      if (typeof children === 'object' &&
+          !(children instanceof DOMNodeCollection)) {
+        children = root.$l(children);
+      }
 
-    if (typeof children === 'string') {
+      if (typeof children === 'string') {
+        this.each(function (node) {
+          node.innerHTML += children;
+        });
+      } else if (children instanceof DOMNodeCollection) {
+        var node = this.nodes[0];
+        children.each(function (childNode) {
+          node.appendChild(childNode);
+        });
+      }
+    },
+
+    attr: function (key, value) {
+      if (typeof value === 'string') {
+        this.each (function (node) {
+          node.setAttribute(key, value);
+        });
+      } else {
+        return this.nodes[0].getAttribute(key);
+      }
+    },
+    addClass: function(className) {
+      this.each(function(node) {
+        node.classList.add(className);
+      });
+    },
+
+    removeClass: function(className) {
+      this.each(function(node) {
+        node.classList.remove(className);
+      });
+    },
+
+    children: function () {
+      var childNodes = [];
+      this.each(function(node) {
+        var childNodeList = node.children;
+        childNodes = childNodes.concat([].slice.call(childNodeList));
+      });
+      return new DOMNodeCollection(childNodes);
+    },
+
+    parent: function () {
+      var parentNodes = [];
       this.each(function (node) {
-        node.innerHTML += children;
+        parentNodes.push(node.parentNode);
       });
-    } else if (children instanceof DOMNodeCollection) {
-      var node = this.nodes[0];
-      children.each(function (childNode) {
-        node.appendChild(childNode);
+      return new DOMNodeCollection(parentNodes);
+    },
+
+    find: function (selector) {
+      var foundNodes = [];
+      this.each(function (node) {
+        var nodeList = node.querySelectorAll(selector);
+        foundNodes = foundNodes.concat([].slice.call(nodeList));
+      });
+      return new DOMNodeCollection(foundNodes);
+    },
+
+    remove: function () {
+      this.each(function(node){
+        node.parentNode.removeChild(node);
+      });
+    },
+
+    on: function (event, callback) {
+      this.each(function(node) {
+        node.addEventListener(event, callback);
+      });
+    },
+
+    off: function (event, callback) {
+      this.each(function (node) {
+        node.removeEventListener(event, callback);
       });
     }
-  },
-
-  attr: function (key, value) {
-    if (typeof value === 'string') {
-      this.each (function (node) {
-        node.setAttribute(key, value);
-      });
-    } else {
-      return this.nodes[0].getAttribute(key);
-    }
-  },
-  addClass: function(className) {
-    this.each(function(node) {
-      node.classList.add(className);
-    });
-  },
-
-  removeClass: function (className) {
-    this.each(function(node) {
-      node.classList.remove(className);
-    });
-  },
-
-  children: function () {
-    var result = [];
-    this.nodes.forEach( function (el) {
-      var children = el.children;
-      for (var i = 0; i < children.length; i++) {
-        result.push(children[i]);
-      }
-    });
-    return new DOMNodeCollection(result);
-  },
-
-  parent: function () {
-    var result = [];
-    this.nodes.forEach(function (el) {
-      var parent = el.parentNode;
-      result.push(parent);
-    });
-    return new DOMNodeCollection(result);
-  },
-
-  find: function (selector) {
-    var result = [];
-    this.nodes.forEach(function (el) {
-      var query = el.querySelectorAll(selector);
-      var queryArray = [].slice.call(query);
-      result = result.concat(queryArray);
-    });
-    return new DOMNodeCollection(result);
-  },
-
-  remove: function () {
-    var length = this.nodes.length;
-    for (var i = 0; i < length; i++) {
-      this.nodes.pop().remove();
-    }
-    return null;
-  },
-
-  on: function (listenedEvent, callback) {
-    this.nodes.forEach( function (el) {
-      el.addEventListener(listenedEvent, callback);
-    });
-    return this.nodes;
-  },
-
-  off: function (listenedEvent, callback) {
-    this.nodes.forEach( function (el) {
-      el.removeEventListener(listenedEvent, callback);
-    });
-    return this.nodes;
-  }
 };
 
 
