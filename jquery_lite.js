@@ -15,24 +15,6 @@
     }
   };
 
-  root.$l = function(arg) {
-    var wrapper;
-
-    if (typeof arg === 'function') {
-      //document is loading...
-      enqueueDocumentCB(arg);
-    } else if (typeof arg === 'string') {
-      //css selector
-      wrapper = retrieveDomNodes(arg);
-    } else if (arg instanceof HTMLElement) {
-      wrapper = new DOMNodeCollection([arg]);
-    } else {
-      console.error("Cannot jQuerify!");
-    }
-
-    return wrapper;
-  };
-
   function retrieveDomNodes(selector) {
     var nodes = [].slice.call(document.querySelectorAll(selector), 0);
     return new DOMNodeCollection(nodes);
@@ -43,36 +25,17 @@
   }
 
   DOMNodeCollection.prototype = {
-
-    html: function(html) {
-      if (typeof html === 'string') {
-        //setter
-        this.nodes.forEach(function (el) {
-          el.innerHTML = html;
-        });
-      } else {
-        //getter
-        if (this.nodes.length > 0) {
-          return this.nodes[0].innerHTML;
-        } else {
-          console.error("No nodes present!");
-        }
-      }
-    },
-
-    each: function(cb) {
-      this.nodes.forEach(cb);
-    },
-
-    empty: function () {
-      this.html("");
+    addClass: function(className) {
+      this.each(function(node) {
+        node.classList.add(className);
+      });
     },
 
     append: function (children) {
       if (this.nodes.length > 0) { return; }
 
       if (typeof children === 'object' &&
-          !(children instanceof DOMNodeCollection)) {
+      !(children instanceof DOMNodeCollection)) {
         children = root.$l(children);
       }
 
@@ -97,17 +60,7 @@
         return this.nodes[0].getAttribute(key);
       }
     },
-    addClass: function(className) {
-      this.each(function(node) {
-        node.classList.add(className);
-      });
-    },
 
-    removeClass: function(className) {
-      this.each(function(node) {
-        node.classList.remove(className);
-      });
-    },
 
     children: function () {
       var childNodes = [];
@@ -118,12 +71,28 @@
       return new DOMNodeCollection(childNodes);
     },
 
-    parent: function () {
-      var parentNodes = [];
-      this.each(function (node) {
-        parentNodes.push(node.parentNode);
-      });
-      return new DOMNodeCollection(parentNodes);
+    each: function(cb) {
+      this.nodes.forEach(cb);
+    },
+
+    empty: function () {
+      this.html("");
+    },
+
+    html: function(html) {
+      if (typeof html === 'string') {
+        //setter
+        this.nodes.forEach(function (el) {
+          el.innerHTML = html;
+        });
+      } else {
+        //getter
+        if (this.nodes.length > 0) {
+          return this.nodes[0].innerHTML;
+        } else {
+          console.error("No nodes present!");
+        }
+      }
     },
 
     find: function (selector) {
@@ -135,15 +104,23 @@
       return new DOMNodeCollection(foundNodes);
     },
 
+    parent: function () {
+      var parentNodes = [];
+      this.each(function (node) {
+        parentNodes.push(node.parentNode);
+      });
+      return new DOMNodeCollection(parentNodes);
+    },
+
     remove: function () {
       this.each(function(node){
         node.parentNode.removeChild(node);
       });
     },
 
-    on: function (event, callback) {
+    removeClass: function(className) {
       this.each(function(node) {
-        node.addEventListener(event, callback);
+        node.classList.remove(className);
       });
     },
 
@@ -151,34 +128,83 @@
       this.each(function (node) {
         node.removeEventListener(event, callback);
       });
+    },
+
+    on: function (event, callback) {
+      this.each(function(node) {
+        node.addEventListener(event, callback);
+      });
     }
 };
 
+  root.$l = function(arg) {
+    var wrapper;
 
-  root.$l.extend = function (obj1, obj2) {
-    var args = [].slice.call(arguments, 1);
-    args.forEach( function (el) {
-      for (var key in el) {
-        obj1[key] = el[key];
+    if (typeof arg === 'function') {
+      //document is loading...
+      enqueueDocumentCB(arg);
+    } else if (typeof arg === 'string') {
+      //css selector
+      wrapper = retrieveDomNodes(arg);
+    } else if (arg instanceof HTMLElement) {
+      wrapper = new DOMNodeCollection([arg]);
+    } else {
+      console.error("Cannot jQuerify!");
+    }
+
+    return wrapper;
+  };
+
+  root.$l.extend = function(base) {
+    var otherObjs = [].slice.call(arguments, 1);
+
+    otherObjs.forEach(function(obj) {
+      for (var prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+          base[prop] = obj[prop];
+        }
       }
     });
-    return obj1;
+    return base;
   };
 
-  root.$l.myAjax = function (options) {
+  var toQueryString = function(obj){
+    var result = "";
+    for(var prop in obj){
+      if (obj.hasOwnProperty(prop)){
+        result += prop + "=" + obj[prop] + "&";
+      }
+    }
+    return result.substring(0, result.length - 1);
+  };
+
+  root.$l.myAjax = function(options) {
+    var request = new XMLHttpRequest();
+
     var requestParams = {
-      type: 'GET',
+      method: 'GET',
       url: window.location.href,
       contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-      success: function () { console.log("Request Complete"); },
-      error: function () { console.log("Error"); }
+      success: function () {},
+      error: function () {},
+      data: {},
     };
-    requestParams = this.extend(requestParams, options);
 
-    var request = new XMLHttpRequest();
-    request.open(requestParams.type, requestParams.url);
-    request.send();
+    requestParams = root.$l.extend(requestParams, options);
+
+    if (options.method.toUpperCase() === 'GET'){
+      options.url += "?" + toQueryString(options.data);
+    }
+
+    request.open(requestParams.method, requestParams.url, true);
+    request.onload = function(e) {
+      if (request.status === 200) {
+        options.success(request.response);
+      } else {
+        options.error(request.response);
+      }
+    };
+
+    request.send(JSON.stringify(options.data));
   };
-
-
 })(this);
