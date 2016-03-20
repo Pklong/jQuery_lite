@@ -52,60 +52,60 @@
       });
     } else {
       //getter
-      return this.nodes[0].innerHTML;
+      if (this.nodes.length > 0) {
+        return this.nodes[0].innerHTML;
+      } else {
+        console.error("No nodes present!");
+      }
     }
+  },
+
+  each: function(cb) {
+    this.nodes.forEach(cb);
   },
 
   empty: function () {
     this.html("");
   },
 
-  append: function (childNode) {
+  append: function (children) {
+    if (this.nodes.length > 0) { return; }
 
-    var htmlEl = childNode;
+    if (typeof children === 'object' &&
+        !(children instanceof DOMNodeCollection)) {
+      children = root.$l(children);
+    }
 
-    this.nodes.forEach( function (el) {
-      if (childNode.constructor.name === "DOMNodeCollection") {
-        htmlEl = childNode.nodes;
-        for (var i = 0; i < htmlEl.length; i++) {
-          el.innerHTML += htmlEl[i].outerHTML;
-        }
-      } else if (typeof htmlEl === "string") {
-        el.innerHTML += htmlEl;
-      } else {
-        el.innerHTML += htmlEl.outerHTML;
-      }
-    });
+    if (typeof children === 'string') {
+      this.each(function (node) {
+        node.innerHTML += children;
+      });
+    } else if (children instanceof DOMNodeCollection) {
+      var node = this.nodes[0];
+      children.each(function (childNode) {
+        node.appendChild(childNode);
+      });
+    }
   },
 
-  attr: function (name, value) {
-    if (value === undefined) {
-      return this.nodes[0].getAttribute(name);
-    } else {
-      this.nodes.forEach (function (el) {
-        el.setAttribute(name, value);
+  attr: function (key, value) {
+    if (typeof value === 'string') {
+      this.each (function (node) {
+        node.setAttribute(key, value);
       });
-      return null;
+    } else {
+      return this.nodes[0].getAttribute(key);
     }
   },
   addClass: function(className) {
-    this.nodes.forEach (function (el) {
-      if (el.attributes["class"] && !el.attributes["class"].value.includes(className)) {
-        var newClass = el.getAttribute("class").split(" ");
-        newClass.push(className);
-        newClass = newClass.join(" ");
-        el.setAttribute("class", newClass);
-      } else if (!el.attributes["class"]) {
-        el.setAttribute("class", className);
-      }
+    this.each(function(node) {
+      node.classList.add(className);
     });
   },
+
   removeClass: function (className) {
-    this.nodes.forEach (function (el) {
-      if (el.attributes["class"]) {
-        var newClass = el.getAttribute("class").replace(className, "").trim();
-        el.setAttribute("class", newClass);
-      }
+    this.each(function(node) {
+      node.classList.remove(className);
     });
   },
 
