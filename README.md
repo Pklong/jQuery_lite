@@ -1,6 +1,8 @@
 # wisDom
 
-wisDom is a light-weight DOM manipulation library that covers essential web API methods.  To show it is fully useable for simple DOM manipulation, I've made a simple game of Snake playable <a href='#'>here</a>
+wisDom is a light-weight DOM manipulation library that covers essential web API methods.  
+
+To illustrate it is fully useable for simple DOM manipulation: [a playable Snake made with wisDom](http://www.pklong.io/snake)
 
 ## Features
 
