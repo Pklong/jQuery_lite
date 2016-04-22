@@ -166,7 +166,7 @@
     } else if (arg instanceof HTMLElement) {
       wrapper = new DOMNodeCollection([arg]);
     } else {
-      console.error("Cannot jQuerify!");
+      console.error("Cannot wisDomify!");
     }
 
     return wrapper;
