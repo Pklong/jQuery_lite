@@ -32,7 +32,7 @@
     },
 
     append: function (children) {
-      if (this.nodes.length > 0) { return; }
+      if (this.nodes.length < 1) { return; }
 
       if (typeof children === 'object' &&
       !(children instanceof DOMNodeCollection)) {
@@ -187,7 +187,7 @@
 
   var toQueryString = function(obj){
     var result = "";
-    for(var prop in obj){
+    for (var prop in obj) {
       if (obj.hasOwnProperty(prop)){
         result += prop + "=" + obj[prop] + "&";
       }
