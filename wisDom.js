@@ -1,4 +1,4 @@
-(function (root) {
+;(function (root) {
   var callBackQueue = [],
       ready = false;
 
@@ -7,17 +7,12 @@
     callBackQueue.forEach(function (cb) { cb(); });
   });
 
-  var enqueueDocumentCB = function(cb) {
-    if (ready) {
-      cb();
-    } else {
-      callBackQueue.push(cb);
-    }
+  function enqueueDocumentCB(cb) {
+    ready ? cb() : callBackQueue.push(cb)
   };
 
   function retrieveDomNodes(selector) {
-    var nodes = [].slice.call(document.querySelectorAll(selector), 0);
-    return new DOMNodeCollection(nodes);
+    return new DOMNodeCollection(document.querySelectorAll(selector));
   }
 
   function DOMNodeCollection(nodes) {
@@ -32,10 +27,9 @@
     },
 
     append: function (children) {
-      if (this.nodes.length < 1) { return; }
+      if (this.nodes.length === 0) { return; }
 
-      if (typeof children === 'object' &&
-      !(children instanceof DOMNodeCollection)) {
+      if (children instanceof HTMLElement) {
         children = root.$w(children);
       }
 
@@ -158,17 +152,21 @@
     var wrapper;
 
     if (typeof arg === 'function') {
-      //document is loading...
       enqueueDocumentCB(arg);
-    } else if (typeof arg === 'string') {
-      //css selector
-      wrapper = retrieveDomNodes(arg);
     } else if (arg instanceof HTMLElement) {
       wrapper = new DOMNodeCollection([arg]);
+    } else if (typeof arg === 'string') {
+      if (arg.startsWith('<')) {
+        // new element
+        const el = document.createElement(arg.slice(1, arg.length -1))
+        wrapper = new DOMNodeCollection([el]);
+      } else {
+        // css selector
+        wrapper = retrieveDomNodes(arg);
+      }
     } else {
       console.error("Cannot wisDomify!");
     }
-
     return wrapper;
   };
 
@@ -195,7 +193,7 @@
     return result.substring(0, result.length - 1);
   };
 
-  root.$w.myAjax = function(options) {
+  root.$w.iPromise = function(options) {
     var request = new XMLHttpRequest();
 
     var requestParams = {
